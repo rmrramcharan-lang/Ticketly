@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ticketly - Online Ticket Booking</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7f1;color:#17251f}
+header{background:#17251f;color:white;padding:18px 6%;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:25px;font-weight:bold;color:#c8f078}
+nav button{background:none;color:white;border:0;padding:8px;font-weight:bold}
+.hero{padding:55px 7%;background:#eaf3dc}
+.hero h1{font-size:48px;margin:12px 0}
+.hero h1 span{color:#83aa3e}
+.hero p{color:#66736a;line-height:1.6}
+button{cursor:pointer}
+.primary,.book{background:#c8f078;border:0;padding:12px 17px;border-radius:7px;font-weight:bold}
+.section{padding:35px 6%}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}
+.filter{padding:10px 15px;border:1px solid #ddd;border-radius:20px;background:white}
+.filter.active{background:#17251f;color:white}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.card{background:white;padding:20px;border-radius:12px;border:1px solid #e5e9df}
+.card h3{margin:18px 0 8px}
+.card p{font-size:13px;color:#78837b}
+.card-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:20px}
+.price{font-size:19px;font-weight:bold}
+.panel{display:none;padding:35px 7%;max-width:650px;margin:auto}
+.panel.show{display:block}
+.panel input,.panel select{width:100%;padding:13px;margin:8px 0 17px;border:1px solid #ddd;border-radius:7px}
+.panel label{font-weight:bold;font-size:13px}
+.panel h1{font-size:35px}
+.total{padding:15px;background:#eaf3dc;margin:15px 0;font-weight:bold;display:flex;justify-content:space-between}
+.full{width:100%}
+.receipt{background:white;border:1px solid #ddd;padding:22px;border-radius:12px;margin:20px 0;line-height:2}
+.booking{background:white;padding:15px;margin:10px 0;border-radius:9px}
+footer{text-align:center;padding:25px;color:#78837b}
+@media(max-width:450px){.hero h1{font-size:39px}.section{padding:25px 5%}header{padding:15px 4%}}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">🎟 TICKETLY</div>
+<nav>
+<button onclick="home()">Home</button>
+<button onclick="myBookings()">My Bookings</button>
+</nav>
+</header>
+
+<div id="homePage">
+<section class="hero">
+<h1>Book Your Next<br><span>Experience.</span></h1>
+<p>Movies, buses, trains, flights and events.<br>Everything you love, in one place.</p>
+<button class="primary" onclick="document.getElementById('tickets').scrollIntoView()">Explore Tickets ↓</button>
+</section>
+
+<section class="section" id="tickets">
+<h2>Explore Tickets</h2>
+<div class="filters" id="filters"></div>
+<div class="grid" id="grid"></div>
+</section>
+</div>
+
+<section class="panel" id="bookingPage">
+<button onclick="home()">← Back</button>
+<h1>Book Your Ticket</h1>
+<p id="selected"></p>
+<form id="bookingForm">
+<label>Full Name</label>
+<input id="name" required placeholder="Enter your name">
+<label>Email Address</label>
+<input id="email" type="email" required placeholder="Enter your email">
+<label>Select Date</label>
+<input id="date" type="date" required>
+<label>Number of Tickets</label>
+<select id="quantity">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+</select>
+<div class="total">
+<span>Total Amount</span>
+<span id="total"></span>
+</div>
+<button class="primary full" type="submit">Confirm Booking</button>
+</form>
+</section>
+
+<section class="panel" id="successPage">
+<div class="receipt">
+<h1>✅ Booking Successful!</h1>
+<p id="successDetails"></p>
+</div>
+<button class="primary" onclick="myBookings()">View My Bookings</button>
+<button class="primary" onclick="home()">Home</button>
+</section>
+
+<section class="panel" id="bookingsPage">
+<button onclick="home()">← Back</button>
+<h1>My Bookings</h1>
+<div id="bookingList"></div>
+</section>
+
+<footer>© 2026 Ticketly | Online Ticket Booking System<br>College Mini Project</footer>
+
+<script>
+const tickets=[
+{id:1,cat:"Movie",title:"The Grand Adventure",detail:"City Cinemas",price:180,icon:"🎬"},
+{id:2,cat:"Bus",title:"Hyderabad to Vijayawada",detail:"AC Express Bus",price:520,icon:"🚌"},
+{id:3,cat:"Train",title:"Hyderabad to Bengaluru",detail:"Intercity Express",price:690,icon:"🚆"},
+{id:4,cat:"Flight",title:"Hyderabad to Delhi",detail:"Demo Airlines",price:4200,icon:"✈️"},
+{id:5,cat:"Event",title:"Live Music Night",detail:"HITEX Hyderabad",price:399,icon:"🎵"},
+{id:6,cat:"Movie",title:"Mystery at Midnight",detail:"Galaxy Multiplex",price:220,icon:"🍿"}
+];
+
+let selected=null;
+let category="All";
+
+function money(n){return "₹"+n.toLocaleString("en-IN")}
+
+function render(){
+let categories=["All","Movie","Bus","Train","Flight","Event"];
+document.getElementById("filters").innerHTML=categories.map(c=>
+`<button class="filter ${category===c?'active':''}" onclick="setCategory('${c}')">${c}</button>`
+).join("");
+
+let list=category==="All"?tickets:tickets.filter(t=>t.cat===category);
+
+document.getElementById("grid").innerHTML=list.map(t=>`
+<div class="card">
+<div style="font-size:30px">${t.icon}</div>
+<small>${t.cat}</small>
+<h3>${t.title}</h3>
+<p>${t.detail}</p>
+<div class="card-bottom">
+<span class="price">${money(t.price)}</span>
+<button class="book" onclick="book(${t.id})">Book →</button>
+</div>
+</div>`).join("");
+}
+
+function hide(){
+document.getElementById("homePage").style.display="none";
+["bookingPage","successPage","bookingsPage"].forEach(id=>
+document.getElementById(id).classList.remove("show"));
+}
+
+function home(){
+hide();
+document.getElementById("homePage").style.display="block";
+window.scrollTo(0,0);
+}
+
+function setCategory(c){category=c;render()}
+
+function book(id){
+selected=tickets.find(t=>t.id===id);
+hide();
+document.getElementById("bookingPage").classList.add("show");
+document.getElementById("selected").textContent=selected.icon+" "+selected.title+" - "+money(selected.price);
+let today=new Date().toISOString().slice(0,10);
+document.getElementById("date").min=today;
+document.getElementById("date").value=today;
+updateTotal();
+window.scrollTo(0,0);
+}
+
+function updateTotal(){
+document.getElementById("total").textContent=
+money(selected.price*Number(document.getElementById("quantity").value));
+}
+
+document.getElementById("quantity").addEventListener("change",updateTotal);
+
+document.getElementById("bookingForm").addEventListener("submit",function(e){
+e.preventDefault();
+let booking={
+id:"TK"+Date.now().toString().slice(-8),
+name:document.getElementById("name").value,
+email:document.getElementById("email").value,
+date:document.getElementById("date").value,
+title:selected.title,
+category:selected.cat,
+quantity:Number(document.getElementById("quantity").value),
+total:selected.price*Number(document.getElementById("quantity").value)
+};
+
+let list=JSON.parse(localStorage.getItem("ticketBookings")||"[]");
+list.unshift(booking);
+localStorage.setItem("ticketBookings",JSON.stringify(list));
+
+hide();
+document.getElementById("successPage").classList.add("show");
+document.getElementById("successDetails").innerHTML=
+"Booking ID: <b>"+booking.id+"</b><br>"+
+"Name: "+escapeText(booking.name)+"<br>"+
+"Ticket: "+booking.title+"<br>"+
+"Date: "+booking.date+"<br>"+
+"Quantity: "+booking.quantity+"<br>"+
+"Total: <b>"+money(booking.total)+"</b>";
+
+window.scrollTo(0,0);
+});
+
+function escapeText(s){
+return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function myBookings(){
+hide();
+document.getElementById("bookingsPage").classList.add("show");
+let list=JSON.parse(localStorage.getItem("ticketBookings")||"[]");
+
+document.getElementById("bookingList").innerHTML=list.length?
+list.map(b=>`
+<div class="booking">
+<b>${b.title}</b><br>
+Booking ID: ${b.id}<br>
+Date: ${b.date}<br>
+Tickets: ${b.quantity}<br>
+Amount: ${money(b.total)}
+</div>`).join("")
+:"<p>No bookings yet. Book your first ticket!</p>";
+
+window.scrollTo(0,0);
+}
+
+render();
+</script>
+</body>
+</html>
